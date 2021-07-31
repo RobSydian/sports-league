@@ -2,9 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Member;
-use App\Entity\Team;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Command\CreateMemberCommand;
+use App\Service\CreateMemberService;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,11 +13,11 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class CreateMemberController extends AbstractController
 {
-    private EntityManagerInterface $em;
+    private CreateMemberService $createMemberService;
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(CreateMemberService $createMemberService)
     {
-        $this->em = $em;
+        $this->createMemberService = $createMemberService;
     }
 
     /**
@@ -25,23 +25,25 @@ class CreateMemberController extends AbstractController
      */
     public function create(Request $request): Response
     {
-        $body = json_decode($request->getContent(), true);
-        
-        $team = $this->em->getRepository(Team::class)->findOneBy([
-            'id' => $body['team_id']
-        ]);
-        
-        $member = (new Member())
-            ->setName($body['name'])
-            ->setFirstSurname($body['first_surname'])
-            ->setSecondSurname($body['second_surname'])
-            ->setPosition($body['position'])
-            ->setTeam($team)
-        ;
+        try {
+            $body = json_decode($request->getContent(), true);
 
-        $this->em->persist($member);
-        $this->em->flush();
+            $this->createMemberService->__invoke(new CreateMemberCommand(
+                $body['name'],
+                $body['first_surname'],
+                $body['second_surname'],
+                $body['position'],
+                $body['team_id']
+            ));
 
-        return new JsonResponse(null, JsonResponse::HTTP_CREATED);
+            return new JsonResponse(null, JsonResponse::HTTP_CREATED);
+        } catch (Exception $e) {
+            return new JsonResponse(
+                [
+                    'error' => $e->getMessage()
+                ],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
+        }
     }
 }
