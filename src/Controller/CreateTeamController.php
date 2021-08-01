@@ -20,7 +20,7 @@ class CreateTeamController extends AbstractController
     }
 
     /**
-     * @Route("/api/team", name="create_team")
+     * @Route("/api/team", name="create_team", methods={"POST"})
      */
     public function create(Request $request): Response
     {

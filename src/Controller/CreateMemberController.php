@@ -21,7 +21,7 @@ class CreateMemberController extends AbstractController
     }
 
     /**
-     * @Route("/api/member", name="create_member")
+     * @Route("/api/member", name="create_member", methods={"POST"})
      */
     public function create(Request $request): Response
     {
